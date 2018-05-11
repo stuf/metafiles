@@ -2,7 +2,11 @@
 module Main where
 
 import qualified Data.ByteString.Lazy.Char8 as C8
+import qualified Data.Text as T hiding (empty)
+import           Turtle as K
 import           System.Xattr
+import           Text.XML.HXT.Core
+import           Text.HandsomeSoup
 
 --
 -- Goal: Get the listed extended attributes from the given `infile`
@@ -10,21 +14,30 @@ import           System.Xattr
 --       [("attribute name", "attribute value")]
 --
 
-infile :: FilePath
+infile :: T.Text
 infile = "Testfile.txt"
 
-whereFrom :: String
+whereFrom :: T.Text
 whereFrom = "com.apple.metadata:kMDItemWhereFroms"
 
-attrs :: [String]
+attrs :: [T.Text]
 attrs = [ "com.apple.metadata:kMDItemWhereFroms"    -- Where file was downloaded from
         , "com.apple.metadata:_kMDItemUserTags"     -- File tags
         , "com.apple.metadata:kMDItemFinderComment" -- File comment
         ]
 
+getCmd :: T.Text -> T.Text
+getCmd file = "xattr -px "
+  <> "com.apple.metadata:kMDItemFinderComment "
+  <> file
+  <> " | xxd -r -p"
+  <> " | plutil -convert xml1 -o - -"
+
 main :: IO ()
 main = do
-  putStrLn "hello world"
+  plist <- strict $ inshell (getCmd infile) empty
 
-  file <- readFile infile
-  print file
+  -- Well woop
+  print plist
+
+  return $ ()
